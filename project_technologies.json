@@ -1,0 +1,16 @@
+{
+    "technologies": {
+        "apis": [
+            "Web Speech API", "Google Plus Api"
+        ],
+        "platforms": [
+            "Google Compute Engine"
+        ],
+        "libraries": [
+            "Node.js","Three.js","Mongodb","Socket.IO"
+        ]
+    },
+    "themes": [
+        "Speech recognition", "WebGL", "interactive installation","text analysis"
+    ]
+}
