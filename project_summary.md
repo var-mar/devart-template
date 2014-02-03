@@ -5,7 +5,7 @@
 - Varvara Guljajeva, http://github.com/varvarag
 - Mar Canet, http://github.com/mcanet
 
-As artist duo we will use http://github.com/var-mar
+As artist duo for Wishing Wall project we will use http://github.com/var-mar
 
 ## Description
 A piece that looks at reimagining how we share our innermost wishes with the world. What if you could say your wish out loud and have it magically released into the world for people to see? In this piece spoken words are transformed into a butterflies, that are diverse in form and colour as they represent the sentiment of the spoken words. The gallery visitors are invited to interact with the butterflies and discover released wishes.  
@@ -25,10 +25,9 @@ We liked the idea to think of a metamorphoses of wish that was also an inspirati
 4. [three.js](http://threejs.org/ "three.js")
 5. [socket.io](http://socket.io "socket.io")
 6. [express.js](http://www.expressjs.com/ "express.js")
-7. [Sentimental analises]([express.js](http://www.expressjs.com/ "Sentimental analises")
+7. [Sentimental](https://github.com/thinkroth/Sentimental "Sentimental")
 8. [passport](http://passportjs.org/ "passport")
-9. [express.js](http://www.expressjs.com/ "express.js")
 
 ## Images & Videos
-NOTE: For additional images you can either use a relative link to an image on this repo or an absolute link to an externally hosted image.
+
 
