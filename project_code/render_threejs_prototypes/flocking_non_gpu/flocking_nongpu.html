@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js canvas - geometry - butterflys</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #808080;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #ffffff;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+		<div id="info"><a href="javascript:addButterfly()">Add a butterfly</a> | <a href="javascript:deleteLastButterfly()">Delete butterfly</a> / <span id="totalButterflies"></span></div>
+
+		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script src="js/three.min.js"></script>
+		<script src="js/Butterfly.js"></script>
+		<script src="js/stats.min.js"></script>
+		<script>
+		// Array Remove - By John Resig (MIT Licensed)
+		Array.prototype.remove = function(from, to) {
+  			var rest = this.slice((to || from) + 1 || this.length);
+  			this.length = from < 0 ? this.length + from : from;
+  			return this.push.apply(this, rest);
+		};
+		</script>
+
+		<script type="x-shader/x-vertex" id="butterflyVS">
+
+			varying vec2 vUv;
+
+			void main() {
+				vUv = uv;
+				vNormal = normal;
+				gl_Position = projectionMatrix * modelViewMatrix *  vec4( position, 1.0 );
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="butterflyFS">
+
+			uniform sampler2D texture1;
+			varying vec2 vUv;
+				
+			void main() {
+				//gl_FragColor = texture2D(texture1, vUv);//
+				gl_FragColor = vec4( 0.0, 1.0, 1.0, 1.0 );
+			}
+
+		</script>
+
+		<!-- ---------------- Custom Shader Code ------------------------ -->
+		<script id="vertexShader" type="x-shader/x-vertex">
+		varying vec2 vUv;
+		void main() 
+		{ 
+    		vUv = uv;
+    		gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}
+		</script>
+
+		<!-- fragment shader a.k.a. pixel shader -->
+		<script id="fragmentShader" type="x-shader/x-vertex"> 
+		uniform sampler2D texture1;
+		varying vec2 vUv;
+		void main() 
+		{
+			gl_FragColor = texture2D( texture1, vUv );
+		}  
+		</script>
+
+
+		<script>
+			// Add glow effect
+			// shader material
+			// 
+
+			// Based on http://www.openprocessing.org/visuals/?visualID=6910
+
+			var Boid = function() {
+
+				var vector = new THREE.Vector3(),
+				_acceleration, _width = 500, _height = 500, _depth = 200, _goal, _neighborhoodRadius = 100,
+				_maxSpeed = 4, _maxSteerForce = 0.1, _avoidWalls = false;
+
+				this.position = new THREE.Vector3();
+				this.velocity = new THREE.Vector3();
+				_acceleration = new THREE.Vector3();
+
+				this.setGoal = function ( target ) {
+
+					_goal = target;
+
+				}
+
+				this.setAvoidWalls = function ( value ) {
+
+					_avoidWalls = value;
+
+				}
+
+				this.setWorldSize = function ( width, height, depth ) {
+
+					_width = width;
+					_height = height;
+					_depth = depth;
+
+				}
+
+				this.run = function ( boids ) {
+
+					if ( _avoidWalls ) {
+
+						vector.set( - _width, this.position.y, this.position.z );
+						vector = this.avoid( vector );
+						vector.multiplyScalar( 5 );
+						_acceleration.add( vector );
+
+						vector.set( _width, this.position.y, this.position.z );
+						vector = this.avoid( vector );
+						vector.multiplyScalar( 5 );
+						_acceleration.add( vector );
+
+						vector.set( this.position.x, - _height, this.position.z );
+						vector = this.avoid( vector );
+						vector.multiplyScalar( 5 );
+						_acceleration.add( vector );
+
+						vector.set( this.position.x, _height, this.position.z );
+						vector = this.avoid( vector );
+						vector.multiplyScalar( 5 );
+						_acceleration.add( vector );
+
+						vector.set( this.position.x, this.position.y, - _depth );
+						vector = this.avoid( vector );
+						vector.multiplyScalar( 5 );
+						_acceleration.add( vector );
+
+						vector.set( this.position.x, this.position.y, _depth );
+						vector = this.avoid( vector );
+						vector.multiplyScalar( 5 );
+						_acceleration.add( vector );
+
+					}/* else {
+
+						this.checkBounds();
+
+					}
+					*/
+
+					if ( Math.random() > 0.5 ) {
+
+						this.flock( boids );
+
+					}
+
+					this.move();
+
+				}
+
+				this.flock = function ( boids ) {
+
+					if ( _goal ) {
+
+						_acceleration.add( this.reach( _goal, 0.005 ) );
+
+					}
+
+					_acceleration.add( this.alignment( boids ) );
+					_acceleration.add( this.cohesion( boids ) );
+					_acceleration.add( this.separation( boids ) );
+
+				}
+
+				this.move = function () {
+
+					this.velocity.add( _acceleration );
+
+					var l = this.velocity.length();
+
+					if ( l > _maxSpeed ) {
+
+						this.velocity.divideScalar( l / _maxSpeed );
+
+					}
+
+					this.position.add( this.velocity );
+					_acceleration.set( 0, 0, 0 );
+
+				}
+
+				this.checkBounds = function () {
+
+					if ( this.position.x >   _width ) this.position.x = - _width;
+					if ( this.position.x < - _width ) this.position.x =   _width;
+					if ( this.position.y >   _height ) this.position.y = - _height;
+					if ( this.position.y < - _height ) this.position.y =  _height;
+					if ( this.position.z >  _depth ) this.position.z = - _depth;
+					if ( this.position.z < - _depth ) this.position.z =  _depth;
+
+				}
+
+				//
+
+				this.avoid = function ( target ) {
+
+					var steer = new THREE.Vector3();
+
+					steer.copy( this.position );
+					steer.sub( target );
+
+					steer.multiplyScalar( 1 / this.position.distanceToSquared( target ) );
+
+					return steer;
+
+				}
+
+				this.repulse = function ( target ) {
+
+					var distance = this.position.distanceTo( target );
+
+					if ( distance < 150 ) {
+
+						var steer = new THREE.Vector3();
+
+						steer.subVectors( this.position, target );
+						steer.multiplyScalar( 0.5 / distance );
+
+						_acceleration.add( steer );
+
+					}
+
+				}
+
+				this.reach = function ( target, amount ) {
+
+					var steer = new THREE.Vector3();
+
+					steer.subVectors( target, this.position );
+					steer.multiplyScalar( amount );
+
+					return steer;
+
+				}
+
+				this.alignment = function ( boids ) {
+
+					var boid, velSum = new THREE.Vector3(),
+					count = 0;
+
+					for ( var i = 0, il = boids.length; i < il; i++ ) {
+
+						if ( Math.random() > 0.6 ) continue;
+
+						boid = boids[ i ];
+
+						distance = boid.position.distanceTo( this.position );
+
+						if ( distance > 0 && distance <= _neighborhoodRadius ) {
+
+							velSum.add( boid.velocity );
+							count++;
+
+						}
+
+					}
+
+					if ( count > 0 ) {
+
+						velSum.divideScalar( count );
+
+						var l = velSum.length();
+
+						if ( l > _maxSteerForce ) {
+
+							velSum.divideScalar( l / _maxSteerForce );
+
+						}
+
+					}
+
+					return velSum;
+
+				}
+
+				this.cohesion = function ( boids ) {
+
+					var boid, distance,
+					posSum = new THREE.Vector3(),
+					steer = new THREE.Vector3(),
+					count = 0;
+
+					for ( var i = 0, il = boids.length; i < il; i ++ ) {
+
+						if ( Math.random() > 0.6 ) continue;
+
+						boid = boids[ i ];
+						distance = boid.position.distanceTo( this.position );
+
+						if ( distance > 0 && distance <= _neighborhoodRadius ) {
+
+							posSum.add( boid.position );
+							count++;
+
+						}
+
+					}
+
+					if ( count > 0 ) {
+
+						posSum.divideScalar( count );
+
+					}
+
+					steer.subVectors( posSum, this.position );
+
+					var l = steer.length();
+
+					if ( l > _maxSteerForce ) {
+
+						steer.divideScalar( l / _maxSteerForce );
+
+					}
+
+					return steer;
+
+				}
+
+				this.separation = function ( boids ) {
+
+					var boid, distance,
+					posSum = new THREE.Vector3(),
+					repulse = new THREE.Vector3();
+
+					for ( var i = 0, il = boids.length; i < il; i ++ ) {
+
+						if ( Math.random() > 0.6 ) continue;
+
+						boid = boids[ i ];
+						distance = boid.position.distanceTo( this.position );
+
+						if ( distance > 0 && distance <= _neighborhoodRadius ) {
+
+							repulse.subVectors( this.position, boid.position );
+							repulse.normalize();
+							repulse.divideScalar( distance );
+							posSum.add( repulse );
+
+						}
+
+					}
+
+					return posSum;
+
+				}
+
+			}
+
+		</script>
+
+		<script>
+
+			var SCREEN_WIDTH = window.innerWidth,
+			SCREEN_HEIGHT = window.innerHeight,
+			SCREEN_WIDTH_HALF = SCREEN_WIDTH  / 2,
+			SCREEN_HEIGHT_HALF = SCREEN_HEIGHT / 2;
+
+			var camera, scene, renderer,
+			butterflys, butterfly;
+
+			var boid, boids;
+			var maximumButterflies = 50;
+
+			var stats;
+
+			init();
+			animate();
+
+			function deleteLastButterfly(){
+				if(butterflys.length>0){
+					deleteButterfly(butterflys.length-1);
+				}
+			}
+
+			function deleteButterfly(i){
+				try{
+					scene.remove(butterflys[i]);
+					boids.remove(i);
+					butterflys.remove(i);
+					$("#totalButterflies").html(butterflys.length);
+				}catch(err){
+
+				}
+			}
+
+			function addButterfly(){
+				var boid = new Boid();
+				boid.position.x = Math.random() * 400 - 200;
+				boid.position.y = Math.random() * 400 - 200;
+				boid.position.z = Math.random() * 400 - 200;
+				boid.velocity.x = Math.random() * 2 - 1;
+				boid.velocity.y = Math.random() * 2 - 1;
+				boid.velocity.z = Math.random() * 2 - 1;
+
+				boid.setAvoidWalls( true );
+				boid.setWorldSize( 500, 500, 400 );
+
+				boids[boids.length] = boid;
+
+				var geometry = new Butterfly();
+				/*
+				// For Vertex Shaders
+				butterflyAttributes = {
+				
+				};
+
+				// For Vertex and Fragment
+				butterflyUniforms = {
+					texture1: { type: "t", value:THREE.ImageUtils.loadTexture( "imgs/butterfly_wind.png" )}
+				};
+
+				// ShaderMaterial
+				var shaderMaterial = new THREE.ShaderMaterial( {
+					uniforms: 		butterflyUniforms,
+					attributes:     butterflyAttributes,
+					vertexShader:   document.getElementById( 'butterflyVS' ).textContent,
+					fragmentShader: document.getElementById( 'butterflyFS' ).textContent,
+					side: THREE.DoubleSide,
+					transparent: true
+					//wireframe: true
+				});
+				*/
+
+				var butterflyTexture = new THREE.ImageUtils.loadTexture( 'imgs/butterfly_wind.png' );
+
+				// use "this." to create global object
+				this.customUniforms = {
+					texture1: 	{ type: "t", value: butterflyTexture },
+				};
+	
+				// create custom material from the shader code above
+				//   that is within specially labeled script tags
+				var customMaterial = new THREE.ShaderMaterial({
+	    			uniforms: customUniforms,
+					vertexShader:   document.getElementById( 'vertexShader'   ).textContent,
+					fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+					side: THREE.DoubleSide,
+					transparent: true
+				});
+				
+				var simpleMaterial = new THREE.MeshBasicMaterial( { map: butterflyTexture, side: THREE.DoubleSide });
+
+				butterfly = new THREE.Mesh( geometry, simpleMaterial);
+
+				butterflys[ butterflys.length ] = butterfly;
+				butterfly.phase = Math.floor( Math.random() * 62.83 );
+				butterfly.position = boid.position;
+				scene.add( butterfly );
+
+				$("#totalButterflies").html(butterflys.length);
+			}
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 75, SCREEN_WIDTH / SCREEN_HEIGHT, 1, 10000 );
+				camera.position.z = 450;
+
+				scene = new THREE.Scene();
+
+				butterflys = [];
+				boids = [];
+
+				for ( var i = 0; i < maximumButterflies; i ++ ) {
+					addButterfly();
+				}
+
+				renderer = new THREE.CanvasRenderer();
+				// renderer.autoClear = false;
+				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.body.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.left = '0px';
+				stats.domElement.style.top = '0px';
+
+				document.getElementById( 'container' ).appendChild(stats.domElement);
+
+				//
+				window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				var vector = new THREE.Vector3( event.clientX - SCREEN_WIDTH_HALF, - event.clientY + SCREEN_HEIGHT_HALF, 0 );
+
+				for ( var i = 0, il = boids.length; i < il; i++ ) {
+
+					boid = boids[ i ];
+
+					vector.z = boid.position.z;
+
+					boid.repulse( vector );
+
+				}
+
+			}
+
+			//
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				stats.update();
+			}
+
+			function render() {
+
+				for ( var i = 0, il = butterflys.length; i < il; i++ ) {
+
+					boid = boids[ i ];
+					boid.run( boids );
+
+					butterfly = butterflys[ i ];
+
+					//color = butterfly.material.color;
+					//color.r = color.g = color.b = ( 500 - butterfly.position.z ) / 1000;
+
+					butterfly.rotation.y = Math.atan2( - boid.velocity.z, boid.velocity.x )+(Math.PI / 2);
+					butterfly.rotation.z = Math.asin( boid.velocity.y / boid.velocity.length() );
+
+					butterfly.phase = ( butterfly.phase + ( Math.max( 0, butterfly.rotation.z ) + 0.1 )  ) % 62.83;
+					
+					butterfly.geometry.vertices[ 1 ].y = butterfly.geometry.vertices[ 3 ].y = butterfly.geometry.vertices[ 4 ].y = butterfly.geometry.vertices[ 7 ].y = butterfly.geometry.vertices[ 9 ].y = butterfly.geometry.vertices[ 10 ].y = Math.sin( butterfly.phase ) * 5;
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>
