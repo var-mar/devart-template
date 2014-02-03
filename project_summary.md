@@ -1,5 +1,5 @@
-# Project Title
-Wishing Wall
+# Wishing Wall
+
 
 ## Authors
 - Varvara Guljajeva, http://github.com/varvarag
