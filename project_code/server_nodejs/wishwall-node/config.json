@@ -1,0 +1,14 @@
+{
+	"server_port":3000
+	, "socket_port": 3001
+	, "pathOfCertificate": ""
+	, "GOOGLE_CLIENT_ID": ""
+	, "GOOGLE_CLIENT_SECRET": ""
+	, "GoogleClientID": ""
+	, "GoogleClientSecret": ""
+	, "Google_callbackURL": ""
+	, "path_node_app": ""
+	, "cookieParser": ""
+	, "sessionSecret":""
+	, "url_mongo" :"mongodb://"
+}

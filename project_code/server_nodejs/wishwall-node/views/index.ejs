@@ -1,0 +1,28 @@
+<% if (!user) { %>
+	<h2>Welcome! Please log in.</h2>
+<% } else { %>
+	<h2>Hello, <%= user.displayName %>.</h2>
+<% } %>
+
+<script type="text/javascript" src="/js/socket.io.js"></script>
+<script>
+  	//user counter in real-time
+  	var socket = io.connect('https://var-mar.info', {secure: true});
+  	socket.on('count', function (data) {
+		console.log(data);
+  	});
+
+   	socket.on('error', function (reason){
+   		console.error('Unable to connect Socket.IO', reason);
+    });
+
+    socket.on('connect', function (){
+        console.info('successfully established a working and authorized connection');
+    });
+
+  	// close when page is closed
+  	$( window ).unload(function() {
+  		socket.disconnect();
+  	});
+</script>
+
