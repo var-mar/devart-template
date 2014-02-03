@@ -1,13 +1,13 @@
 {
     "technologies": {
         "apis": [
-            "Web Speech API", "Google Plus Api"
+            "Web Speech", "Google Plus"
         ],
         "platforms": [
             "Google Compute Engine"
         ],
         "libraries": [
-            "Node.js","Three.js","Mongodb","Socket.IO"
+            "Node.js","Three.js","Mongodb","Mongoose","Passport","Sentimental","Socket.IO"
         ]
     },
     "themes": [
