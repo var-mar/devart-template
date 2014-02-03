@@ -2,8 +2,8 @@
 
 
 ## Authors
-- Varvara Guljajeva, http://github.com/varvarag
-- Mar Canet, http://github.com/mcanet
+* [Varvara Guljajeva](http://www.varvarag.info "Varvara Guljajeva"), http://github.com/varvarag
+* [Mar Canet](http://www.mcanet.info "Mar Canet"), http://github.com/mcanet 
 
 As artist duo for Wishing Wall project we will use http://github.com/var-mar
 
