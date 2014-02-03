@@ -23,13 +23,16 @@ function test() {
 }
 ```
 ## Links to External Libraries
- NOTE: You can also use this space to link to external libraries or Github repositories you used on your project.
-
-[Example Link](http://www.google.com "Example Link")
+[node.js](http://www.nodejs.org/ "node.js")
+[mongoDB](http://www.mongodb.org/ "mongoDB")
+[mongoose](http://mongoosejs.com/ "mongoose")
+[three.js](http://threejs.org/ "three.js")
+[socket.io](http://socket.io "socket.io")
+[express.js](http://www.expressjs.com/ "express.js")
+[Sentimental analises]([express.js](http://www.expressjs.com/ "Sentimental analises")
+[passport](http://passportjs.org/ "passport")
+[express.js](http://www.expressjs.com/ "express.js")
 
 ## Images & Videos
 NOTE: For additional images you can either use a relative link to an image on this repo or an absolute link to an externally hosted image.
 
-![Example Image](project_images/cover.png?raw=true "Example Image")
-
-http://www.youtube.com/watch?v=PgiHCiWlxJE
