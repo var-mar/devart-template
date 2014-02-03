@@ -2,7 +2,10 @@
 Wishing Wall
 
 ## Authors
-- [Varvara Guljajeva](http://www.varvarag.info "Varvara Guljajeva") & [Mar Canet](http://www.mcanet.info "Mar Canet"), http://github.com/var-mar
+- Varvara Guljajeva, http://github.com/varvarag
+- Mar Canet, http://github.com/mcanet
+
+As artist duo this project we will use http://github.com/var-mar
 
 ## Description
 A piece that looks at reimagining how we share our innermost wishes with the world. What if you could say your wish out loud and have it magically released into the world for people to see? In this piece spoken words are transformed into a butterflies, that are diverse in form and colour as they represent the sentiment of the spoken words. The gallery visitors are invited to interact with the butterflies and discover released wishes.  
