@@ -4,7 +4,7 @@
             "Web Speech", "Google Plus"
         ],
         "platforms": [
-            "Google Compute Engine"
+            "Google Compute Engine","Web"
         ],
         "libraries": [
             "Node.js","Three.js","Mongodb","Mongoose","Passport","Sentimental","Socket.IO"
