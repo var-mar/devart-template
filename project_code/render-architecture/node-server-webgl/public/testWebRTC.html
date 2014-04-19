@@ -1,0 +1,61 @@
+<html>
+<header>
+<script type="text/javascript" src="http://cdn.peerjs.com/0.3/peer.js"></script>
+<script type="text/javascript" src="js/libs/socket.io.js"></script>
+<script type="text/javascript">
+
+  var peerId;
+  var screensAr;
+  var socket;
+  var peer;
+
+  // socket.io
+  var socket = io.connect('http://localhost:9001');
+  screensAr = new Array();
+
+  socket.on('new-connection', function (data) {
+    socket.emit('ids', { id: peerId });
+  });
+  
+  socket.on('ids', function (data) {
+    var newId = data.id.id
+    console.log(newId);
+    var conn = peer.connect(newId); 
+    conn.on('open', function(){
+      console.log("open");
+      conn.send('hi!');
+    });
+    screensAr.push({'conn':conn,'id':newId});
+  });
+
+  // webRTC
+  peer = new Peer( {host: 'localhost', port: 9000, path: '/'});
+  // get id from webRTC
+  peer.on('open', function(id){
+    peerId = id;
+    console.log('My peer ID is:' + id);
+    //peer.connect(peerId); 
+    socket.emit('ids', { id: peerId });
+  });  
+
+	peer.on('connection', function(conn) {
+  		conn.on('data', function(data){
+       console.log("Who is:"+conn.peer+" data:"+data); 
+  		});
+	});
+
+  function isNewId(id){
+    for(var i=0;i<screensAr.length;i++){
+      if(screenAr[i].id == id){
+        break;
+        return false;
+      }
+    }
+    return true;
+  }
+
+</script>
+</header>
+<body>
+</body>
+</html>

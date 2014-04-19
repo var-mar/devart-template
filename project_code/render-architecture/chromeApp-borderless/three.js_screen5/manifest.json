@@ -1,0 +1,11 @@
+{
+  "name": "Frameless Window wishingWall Screen5",
+  "description": "Chrome platform app.",
+  "manifest_version": 2,
+  "version": "0.2",
+  "app": {
+    "background": {
+      "scripts": ["app5.js"]
+    }
+  }
+}
