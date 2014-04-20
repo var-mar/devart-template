@@ -12,7 +12,7 @@ function screenSyncronizer(screenId,totalScreens){
   var self = this;
   //---------------------------------------------------------------------------
   // socket.io
-  this.socket = io.connect('http://localhost:9001');
+  this.socket = io.connect('http://192.168.0.5:9001',{reliable:false});
   this.socket.on('new-connection', function (data) {
     console.log('new-connection');
     self.socket.emit('ids', { "id": self.peerId,"screenId":self.screenId });
@@ -38,7 +38,7 @@ function screenSyncronizer(screenId,totalScreens){
   setInterval(function(){self.emitPeerId();},5000);
   //---------------------------------------------------------------------------
   // webRTC
-  this.peer = new Peer( {host: 'localhost', port: 9000, path: '/'});
+  this.peer = new Peer( {host: '192.168.0.5', port: 9000, path: '/'},{reliable:false});
   // get id from webRTC
   this.peer.on('open', function(id){
     self.peerId = id;
@@ -50,11 +50,11 @@ function screenSyncronizer(screenId,totalScreens){
   // receive alldata
   this.peer.on('connection', function(conn) {
       conn.on('data', function(data){
-        console.log(typeof(data));
-        console.log("Who is:"+conn.peer+" data:"+data); 
+        //console.log(typeof(data));
+        //console.log("Who is:"+conn.peer+" data:"+data); 
         //
-        var time = new Date(); //time in milliseconds
-        var diff = (time-self.last_time)/1000;
+        var time = new Date().getMilliseconds(); //time in milliseconds
+        var diff = 1000/(time-self.last_time);
         $("#fpsWebRTC_label").html(diff);
         self.last_time = time;
       });
