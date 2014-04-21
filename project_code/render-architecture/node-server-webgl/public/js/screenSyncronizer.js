@@ -1,4 +1,4 @@
-function screenSyncronizer(screenId,totalScreens){
+function screenSyncronizer(screenId,totalScreens,serverPath){
   //
   this.peerId;
   this.peer;
@@ -7,12 +7,13 @@ function screenSyncronizer(screenId,totalScreens){
   for(var i=1;i<=totalScreens;i++){
     this.screensAr.push({'conn':null,'peerId':null,'screenId':i.toString()});
   }
-  this.last_time = 0;
   this.debug = true;
+  this.serverPath = serverPath; 
   var self = this;
+
   //---------------------------------------------------------------------------
   // socket.io
-  this.socket = io.connect('http://192.168.0.5:9001',{reliable:false});
+  this.socket = io.connect('http://'+self.serverPath+':9001');
   this.socket.on('new-connection', function (data) {
     console.log('new-connection');
     self.socket.emit('ids', { "id": self.peerId,"screenId":self.screenId });
@@ -24,21 +25,21 @@ function screenSyncronizer(screenId,totalScreens){
     console.log("ids = peerId:"+peerId+" screenId"+screenId); 
     self.saveNew({'peerId':peerId,'screenId':screenId});
     if(self.checkAllScreens()){
-      self.sendMessageToAllPeers('ready-'+self.screenId.toString());
+      //self.sendMessageToAllPeers('ready-'+self.screenId.toString());
     }
   });
 
   this.emitPeerId = function(){
     self.socket.emit('ids', { "id": self.peerId,"screenId":self.screenId });
   }
-  this.emitPeerId = function(){
+  //setInterval(function(){self.emitPeerId();},5000);
 
-  }
-
-  setInterval(function(){self.emitPeerId();},5000);
   //---------------------------------------------------------------------------
   // webRTC
-  this.peer = new Peer( {host: '192.168.0.5', port: 9000, path: '/'},{reliable:false});
+  this.peer = new Peer( {host: self.serverPath, port: 9000, path: '/', 
+              config: { 'iceServers': [ 
+                { 'url': 'stun:stun.l.google.com:19302' }   
+              ] } },{reliable:false});
   // get id from webRTC
   this.peer.on('open', function(id){
     self.peerId = id;
@@ -47,18 +48,42 @@ function screenSyncronizer(screenId,totalScreens){
     self.socket.emit('ids', { 'id': self.peerId });
     $("#myPeerId_label").html(self.peerId);
   });  
+
   // receive alldata
   this.peer.on('connection', function(conn) {
       conn.on('data', function(data){
-        //console.log(typeof(data));
-        //console.log("Who is:"+conn.peer+" data:"+data); 
-        //
-        var time = new Date().getMilliseconds(); //time in milliseconds
-        var diff = 1000/(time-self.last_time);
-        $("#fpsWebRTC_label").html(diff);
-        self.last_time = time;
+        if(typeof(data)=="string"){
+          console.log("==> receive-data! str:"+data);
+          self.counterDataReceivedString += 1;
+        }else{
+          self.counterDataReceivedArray += 1;
+          console.log("===> receive-data!"+typeof(data));
+        }
       });
+      
+      conn.on('close', function(id){
+        console.log("close peerId");
+        console.log(id);
+      });
+
+      conn.on('error', function(err){
+        console.log("Error peerId");
+        console.log(err);
+      });
+      
   });
+  //---------------------------------------------------------------------------
+  // metrics performance
+  this.frameCalculator = function(){
+    $("#fpsReceiveWebRTCString_label").html(self.counterDataReceivedString);
+    $("#fpsReceiveWebRTCArray_label").html(self.counterDataReceivedArray);
+    self.counterDataReceivedString = 0;
+    self.counterDataReceivedArray = 0;
+  }
+  this.counterDataReceivedString = 0;
+  this.counterDataReceivedArray = 0;
+  setInterval(function(){self.frameCalculator();},1000);
+  
   //---------------------------------------------------------------------------
   // debug display
   this.display = function (){
@@ -69,7 +94,7 @@ function screenSyncronizer(screenId,totalScreens){
       $("#myPanel").append('<div id="myPeerId">My PeerId:<span id="myPeerId_label"></span></div>');
       $("#myPanel").append('<div id="peerList"></div>');
       $("#myPanel").append('<div id="logWebRTC"></div>');
-      $("#myPanel").append('<div id="fpsWebRTC">FPS:<span id="fpsWebRTC_label"></span></div>');
+      $("#myPanel").append('<div id="fpsWebRTC">FPS-IN-A:<span id="fpsReceiveWebRTCArray_label"></span><br>FPS-IN-S:<span id="fpsReceiveWebRTCString_label"></span><br> FPS-OUT:<span id="fpsSendWebRTC_label"></span></div>');
       if(self.debug) $("#myPanel").show();
     }
   }
@@ -80,10 +105,10 @@ function screenSyncronizer(screenId,totalScreens){
     $("#peerList").html("");
     for(var i=0;i<self.screensAr.length;i++){
       if(self.screensAr[i].screenId == object.screenId){
-        if(self.screensAr[i].conn ==null || self.screensAr[i].peerId != object.peerId ){
+        if(self.screensAr[i].conn ==null  ){ //|| self.screensAr[i].peerId != object.peerId
           // make connection to store it
           var conn = self.peer.connect(object.peerId); 
-            conn.on('open', function(){
+          conn.on('open', function(){
             console.log("open");
             conn.send('hi!');
           });
