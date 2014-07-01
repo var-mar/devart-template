@@ -1,0 +1,40 @@
+{
+    "start-interaction": 120,
+    "end-interaction": 200,
+    "wall-position": 100,
+    "total-asus-sensors": 1,
+    "handSize": 50.0,
+    "osc-port-in":12355,
+    "osc-port-out":12345,
+    "osc-host-server":"192.168.15.112",
+    "hand-chrome-ip":"192.168.15.113",
+    "hand-chrome-port":4000,
+    /*
+    Notes:
+    microphoneID are 1,2,3 ( 1 should be the more left, 2 middle and 3 the more right)
+    asusID are 0,1,2
+    */
+    "Asus":[ 
+        {
+            "microphoneID": 1,
+            "leftPixelTracking":100,
+            "rightPixelTracking":400,
+            "leftPixelScreen":100,
+            "rightPixelScreen":400
+        },
+        {
+            "microphoneID": 2,
+            "leftPixelTracking":500,
+            "rightPixelTracking":8000,
+            "leftPixelScreen":100,
+            "rightPixelScreen":400
+        },
+        {
+            "microphoneID": 3,
+            "leftPixelTracking":800,
+            "rightPixelTracking":1100,
+            "leftPixelScreen":100,
+            "rightPixelScreen":400
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "start-interaction": 120,
+    "end-interaction": 200,
+    "wall-position": 100,
+    "total-asus-sensors": 1,
+    "handSize": 50.0,
+    "osc-port-in":12355,
+    "osc-port-out":12345,
+    "osc-host-server":"192.168.15.112",
+    "hand-chrome-ip":"192.168.15.113",
+    "hand-chrome-port":4000,
+    "hand-id":1
+}

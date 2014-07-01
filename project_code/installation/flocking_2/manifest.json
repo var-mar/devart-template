@@ -1,0 +1,27 @@
+{
+  "name": "Mac Pro - WishingWall Screen flocking 2",
+  "description": "Devart project app by Mar Canet & Varvara Guljajeva.",
+  "manifest_version": 2,
+  "version": "0.2",
+  "permissions": [
+//    "alwaysOnTopWindows",
+    "http://*/",
+    "https://*/"
+  ],
+  "sockets": { 
+      "udp": {
+        "send": "*",
+        "bind": "*"
+      }
+  },
+  "icons": {
+    "16": "img/icon-16.png",
+    "24": "img/icon-24.png",
+    "128": "img/icon-128.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  }
+}

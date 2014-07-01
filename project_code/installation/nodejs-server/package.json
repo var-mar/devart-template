@@ -1,0 +1,35 @@
+{
+  "name": "Wishingwall",
+  "version": "0.0.0",
+  "description": "Wishing wall - Devart (art made with code) commission by Google to artists: Varvara Guljajeva and Mar Canet.",
+  "main": "serverScreens.js",
+  "homepage": "https://github.com/var-mar/devart-template",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/var-mar/devart-template.git"
+  },
+  "bugs": {
+    "url": "http://github.com/var-mar/devart-template/issues"
+  },
+  "licenses": [
+    {
+      "type": "Apache2",
+      "url": "https://github.com/GoogleChrome/ChromeWebLab/blob/master/LICENSE.txt"
+    }
+  ],
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "socket.io": "~0.9.16",
+    "serialport": "~1.1.3",
+    "svg2png":"~1.1.0",
+    "xml2json":"~0.4.0",
+    "color-scheme":"~0.0.5",
+    "shuffle":"~0.2.1",
+    "nconf":"~0.6.9",
+    "node-osc":"~0.2.1",
+    "express":"~4.4.4",
+    "Sentimental":"~1.0.1",
+    "languagedetect":"~1.1.0",
+    "mongoose":"~3.8.12"
+  }
+}

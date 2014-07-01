@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "NUC - Speak to wishing wall 3",
+  "version": "1",
+  "permissions": ["audioCapture","serial"],
+  "icons": {
+    "16": "img/icon-16.png",
+    "24": "img/icon-24.png",
+    "128": "img/icon-128.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["js/main.js"]
+    }
+  },
+  "minimum_chrome_version": "27"
+}

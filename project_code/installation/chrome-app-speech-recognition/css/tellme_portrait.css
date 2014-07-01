@@ -1,0 +1,27 @@
+@media all and (orientation: portrait) {
+ .ptt button {
+   width: 200px;
+   height: 200px;
+   border-radius: 50px;
+   background-size: auto;
+   font-size: 30px;
+   line-height: normal;
+ }
+ .ptt {
+   width: 200px;
+   height: 200px;
+ }
+ .idleControls button {
+   line-height: 100px;
+   height: 100px;
+ }
+ .controls {
+   text-align: center;
+   bottom: 20px;
+ }
+ .ptt .pulse {
+   border-radius: 50px;
+   width: 200px;
+   height: 200px;
+ }
+}

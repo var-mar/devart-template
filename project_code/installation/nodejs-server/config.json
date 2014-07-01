@@ -1,0 +1,12 @@
+{
+	  "server_port":3000
+	, "socket_port": 3001
+	, "osc-port-in":12345
+	, "osc-port-out":12355
+	, "mongodb-host":"127.0.0.1:27017/wishwall"
+	, "exhibition_id":"barbican"
+	, "lang":"en"
+	, "hour_difference_greenwich":1
+	, "hand-OF-computer-ip":"192.168.0.11"	
+	, "hand-chrome-computer-ip":"192.168.15.113"	
+}
