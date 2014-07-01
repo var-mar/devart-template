@@ -12,9 +12,9 @@ We liked the idea to think of a metamorphoses of wish that was also an inspirati
 
 ## Folder and File Structure
 
-- **project_posts/** *Blog posts done during the progress.*
-- **project_images/** *Stored images for your Project Summary and Project Posts.*
-- **project_code/** *Source code and stable releases of the project. *
+- **project_posts/** Blog posts done during the progress.
+- **project_images/** Stored images for your Project Summary and Project Posts.
+- **project_code/** Source code and stable releases of the project.
 
 ## Devart project page with extra information process
 https://devart.withgoogle.com/#/project/16494767
