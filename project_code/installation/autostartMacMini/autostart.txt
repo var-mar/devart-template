@@ -1,1 +1,1 @@
-/Users/wishingwallhands/Dropbox/Ilmari_devart_google/bin1-mac-mini/asus_hands_tracking.app/Contents/MacOS/asus_hands_tracking
+/Users/wishingwallhands/Dropbox/devart_google/bin1-mac-mini/asus_hands_tracking.app/Contents/MacOS/asus_hands_tracking

@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /Users/wishingwall2/Dropbox/Ilmari_devart_google/nodejs-server 
+cd /Users/wishingwall2/Dropbox/devart_google/nodejs-server 
 forever start serverScreens.js 
