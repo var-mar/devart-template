@@ -20,4 +20,4 @@ We liked the idea to think of a metamorphoses of wish that was also an inspirati
 https://devart.withgoogle.com/#/project/16494767
 
 Acknowledgements:
-Thanks to all Google Creative Lab team for all help and support to realize this project.
+Thanks to all Google Creative Lab team and Barbican for all help and support to realize this project.
