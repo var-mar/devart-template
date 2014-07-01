@@ -1,6 +1,6 @@
 # DevArt 'Wishing wall' 
 
-This is repository of the artwork 'Wishing wall' by Varvara Guljajeva and Mar Canet commissioned by Google and Barbican inside DevArt project and first presented in July 2014 inside Digital Revolution exhibition at Barbican.
+This is repository of the artwork 'Wishing wall' by Varvara Guljajeva and Mar Canet commissioned by Google and Barbican. The project was first presented in July 2014 inside Digital Revolution exhibition at Barbican.
 
 ## Description
 A piece that looks at reimagining how we share our innermost wishes with the world. What if you could say your wish out loud and have it magically released into the world for people to see? In this piece spoken words are transformed into a butterflies, that are diverse in form and colour as they represent the sentiment of the spoken words. The gallery visitors are invited to interact with the butterflies and discover released wishes.
