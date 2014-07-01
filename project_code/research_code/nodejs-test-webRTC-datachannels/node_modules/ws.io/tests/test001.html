@@ -1,0 +1,18 @@
+<!DOCTYPE thml>
+<html>
+<meta charset='utf-8'>
+<head>
+<script src='../ws.io.js'></script>
+</head>
+<body>
+	<button onclick='socket.emit("echo", "hello")'>test</button>
+</body>
+</html>
+<script>
+var socket = io.connect('ws://127.0.0.1:8443');
+socket.on('echo', function(msg) {
+	console.log(msg);
+	//var data = JSON.parse(msg.data);
+	alert(msg);
+});
+</script>

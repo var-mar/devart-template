@@ -1,0 +1,30 @@
+<html>
+<head>
+<title>screen1</title>
+	
+<script type="text/javascript" src="/js/libs/socket.io.js"></script>
+<script type="text/javascript">
+  var ar = new Uint8Array(32000);
+  var counterfps = 0;
+  var socket = io.connect('http://localhost:3001');
+  socket.on('data-share', function (data) {
+    console.log(typeof(data));
+    counterfps +=1;
+  });
+  function countFPS(){
+  	document.getElementById("fps").innerHTML = counterfps;
+	counterfps =0;
+  }
+  setInterval(function(){countFPS();},1000);
+
+  
+  function send(){
+  	socket.emit('data-share', ar);
+  }
+  setInterval(function(){send();},50);
+</script>
+</head>
+<body>
+	fps:<span id="fps"></span>
+</body>
+</html>

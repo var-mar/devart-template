@@ -1,0 +1,37 @@
+<html>
+<title>coded typography</title>
+<script src="http://threejs.org/build/three.min.js"></script>
+<script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+<script src="http://threejs.org/examples/js/libs/dat.gui.min.js"></script>
+<script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
+
+<script src="typography.js"></script>
+<script src="main.js"></script>
+<style>
+body{
+	color:#ff0000;
+	background-color:black;
+}
+#info{
+	left:100px;
+	position: absolute;;
+	top:10px;
+}
+.white{
+	color:white;
+}
+</style>
+<body onLoad="init()">
+<div id="info">
+	Letter: <span id="letter" class="white"></span><br>
+	Counter: <span id="counter" class="white"></span><br>
+	Total letters: <span id="total-letters" class="white"></span><br>
+	LetterId: <span id="letterId" class="white"></span><br>
+	Text current wish: <span id="wish" class="white"></span><br>
+	startX: <span id="startx" class="white"></span><br>
+	totalVertices: <span id="totalVertices" class="white"></span><br>
+	totalVertices: <span id="totalUseVertices" class="white"></span><br>
+</div>
+<!--Send new wish: <textarea name="wishText" cols="45" rows="5"></textarea><input type="submit" onclick="javascript:newWishInput();"><br>-->
+</body>
+</html>

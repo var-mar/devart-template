@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js canvas - geometry - text</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+
+	<script type="x-shader/x-vertex" id="vertexshader">
+
+		// switch on high precision floats
+		uniform float time;
+		uniform float scale1;
+		uniform float scale2;
+		uniform float radiusFactor;
+		uniform float posY;
+		uniform float spiralFactorY;
+		uniform float spiralFactorX;
+		uniform float rotationXFont;
+		uniform float textHeight;
+		uniform float widthText;
+		uniform float initialRadius;
+		uniform float radiusMax;
+		uniform float radiusIncrementalSmoothness;
+		uniform float heightText;
+		uniform float slopeFactor;
+		uniform float rotationY;
+
+		varying vec3 vNormal;
+
+		// New to correct
+		float radiusCalculator_method1(vec3 p,float widthTextC,float heightTextC){
+			float a =  (p.x+(p.y+heightTextC/2.0))/widthTextC;
+			float b = (p.y+heightTextC/2.0)/widthTextC * (p.y+heightTextC/2.0)/widthTextC;
+			float radius = radiusIncrementalSmoothness*(-(p.x/widthTextC)*(p.x/widthTextC)-b 
+			+2.0*radiusMax*(a))+initialRadius;
+			return radius;
+		}
+
+		// Works
+		float radiusCalculator_method2(vec3 p,float widthTextC,float heightTextC){
+			float radius = radiusIncrementalSmoothness*(-(p.x/widthTextC)*(p.x/widthTextC)+2.0*radiusMax*(p.x/widthTextC))+initialRadius;
+			float rC = radius-((p.y+heightTextC/2.0)/widthTextC*slopeFactor*radiusIncrementalSmoothness*(-(p.x/widthTextC)+radiusMax));
+			return rC;
+		}
+
+		vec3 transformation(vec3 pos, float angle){
+			vec3 p0 = pos*scale1;//
+			vec3 p1 = p0;
+			float widthTextC = widthText*scale1; 
+			float heightTextC = heightText*scale1;
+			
+			float rC = radiusCalculator_method1(p0, widthTextC,heightTextC);
+
+			p1.x = rC * sin(angle);
+			p1.z = rC * cos(angle);
+			p1.y *=textHeight;
+			p1.y -= (p0.x*spiralFactorY)-posY; 
+			p1 = p1*scale2;
+			return p1;
+		}
+		
+		vec3 derivative(vec3 pos, float angle){
+			vec3 p0 = pos*scale1;
+			float widthTextC = widthText*scale1; 
+			//float angl = p0.x*spiralFactorX;
+			vec3 r = vec3(
+					( (radiusIncrementalSmoothness*2.0)*(-(p0.x/widthTextC)+radiusMax))/widthTextC,
+					1.0,
+					0.0);
+
+			r = r * mat3(
+			    cos(angle),    0, sin(angle),
+			    0,  1.0,    0,
+			    -sin(angle),  0,  cos(angle)
+		  	);
+			return r;
+		}
+		
+		void main()
+		{
+			float angle = position.x*scale1*spiralFactorX+rotationY;
+			vec3 position0 = transformation(position, angle);
+			
+			vec3 vectorTangent1 = vec3(cos(angle),0,-sin(angle));
+			vec3 vectorTangent2 = derivative(position,angle);
+
+			vNormal = cross(vectorTangent1, vectorTangent2 );
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(position0,1.0);
+		}
+
+	</script>
+
+	<script type="x-shader/x-fragment" id="fragmentshader">
+		varying vec3 vNormal;
+
+		void main()
+		{
+			// calc the dot product and clamp
+			// 0 -> 1 rather than -1 -> 1
+			vec3 light = vec3(0.5, 0.2, 1.0);
+
+			// ensure it's normalized
+			light = normalize(light);
+
+			// calculate the dot product of
+			// the light to the vertex normal
+			float dProd = max(0.0,
+			                  dot(vNormal, light));
+
+			// feed into our frag colour
+			gl_FragColor = vec4(  dProd,    					// R
+			                      dProd,  						// G
+			                      dProd,  						// B
+			                      1.0) + vec4(0.4,0.4,0.4,1);  	// A
+			
+		}
+
+	</script>
+		<script src="js/three.min.js"></script>
+		<script src="js/stats.min.js"></script>	
+		<script src="js/jquery-1.11.0.min.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/helvetiker_regular.typeface.js"></script>
+		<script src="js/dat.gui.min.js"></script>
+		<script src="js/typography.js"></script>
+		<script src="js/cocoon.js"></script>
+		<script>
+
+			var container, stats;
+			var camera, scene, renderer;
+			var group, text;
+			var targetRotation = 0;
+			var targetRotationOnMouseDown = 0;
+			var mouseX = 0;
+			var mouseXOnMouseDown = 0;
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+			
+			var controls;
+			var myCocoon;
+
+			var text = "";
+			var firstLetter = true;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set( 0, 150, 500 );
+
+				//controls = new THREE.OrbitControls( camera );
+				//controls.addEventListener( 'change', render );
+				scene = new THREE.Scene();
+
+				myCocoon = new cocoon();
+
+				valuesChanger = function() {
+				   	myCocoon.valuesChanger()
+				};
+
+				var gui = new dat.GUI();
+				gui.add( myCocoon.effectController, "radiusFactor", 0.0, 5.0, 1.0 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "initialRadius", 0.0, 2000.0, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "radiusMax", 0.35, 0.65, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "slopeFactor", 2.0, 4.5, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "radiusIncrementalSmoothness", 0.0, 1000.00, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "spiralFactorX", 0.0, 2, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "spiralFactorY", 0.0, 100, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "textHeight", 0.0, 100.0, 0.025 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "posY", -4000.0, 4000.0, 0.025 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "scale1", -0.0, 1.0, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "scale2", -0.0, 1.0, 0.001 ).onChange( valuesChanger );
+				gui.add( myCocoon.effectController, "rotationXFont", 0.0, 10.0, 0.001 ).onChange( valuesChanger );
+				
+				//valuesChanger();				
+
+				renderer = new THREE.WebGLRenderer();
+				renderer.setClearColor( 0x000000 );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );
+
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+				document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+				document.addEventListener( 'keypress', onDocumentKeyPress, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
+
+				//
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+			
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function onDocumentKeyDown( event ) {
+				if ( firstLetter ) {
+					firstLetter = false;
+					text = "";
+				}
+				var keyCode = event.keyCode;
+				// backspace
+				if ( keyCode == 8 ) {
+					event.preventDefault();
+					text = text.substring( 0, text.length - 1 );
+					myCocoon.refreshText(text);
+					return false;
+				}
+			}
+
+			function onDocumentKeyPress( event ) {
+				var keyCode = event.which;
+				// backspace
+				if ( keyCode == 8 ) {
+					event.preventDefault();
+				} else {
+					var ch = String.fromCharCode( keyCode );
+					text += ch;
+					myCocoon.refreshText(text);
+				}
+			}
+
+			//
+			function onDocumentMouseDown( event ) {
+
+				event.preventDefault();
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.addEventListener( 'mouseout', onDocumentMouseOut, false );
+
+				mouseXOnMouseDown = event.clientX - windowHalfX;
+				targetRotationOnMouseDown = targetRotation;
+
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				mouseX = event.clientX - windowHalfX;
+
+				targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.02;
+
+			}
+
+			function onDocumentMouseUp( event ) {
+
+				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+
+			}
+
+			function onDocumentMouseOut( event ) {
+
+				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+
+			}
+
+			function onDocumentTouchStart( event ) {
+
+				if ( event.touches.length == 1 ) {
+
+					event.preventDefault();
+
+					mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
+					targetRotationOnMouseDown = targetRotation;
+				}
+			}
+
+			function onDocumentTouchMove( event ) {
+				if ( event.touches.length == 1 ) {
+					event.preventDefault();
+					mouseX = event.touches[ 0 ].pageX - windowHalfX;
+					targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
+				}
+
+			}
+
+			//
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+				stats.update();
+				//controls.update();
+			}
+
+			function render() {
+				//( targetRotation - group.rotation.y ) * 
+				myCocoon.rotateY();
+				now = performance.now();
+				//uniformsBasic.time.value = now;
+				
+				renderer.render( scene, camera );
+			}
+
+
+/*
+		// rotateAngleAxisMatrix returns the mat3 rotation matrix
+		// for given angle and axis.
+		mat3 rotateAngleAxisMatrix(float angle, vec3 axis) {
+		  float c = cos(angle);
+		  float s = sin(angle);
+		  float t = 1.0 - c;
+		  axis = normalize(axis);
+		  float x = axis.x, y = axis.y, z = axis.z;
+		  return mat3(
+		    t*x*x + c,    t*x*y + s*z,  t*x*z - s*y,
+		    t*x*y - s*z,  t*y*y + c,    t*y*z + s*x,
+		    t*x*z + s*y,  t*y*z - s*x,  t*z*z + c
+		  );
+		}
+		
+		// rotateAngleAxis rotates a vec3 over the given axis by the given angle and
+		// returns the rotated vector.
+		vec3 rotateAngleAxis(float angle, vec3 axis, vec3 v) {
+		  return rotateAngleAxisMatrix(angle, axis) * v;
+		}
+		
+		void main()
+		{
+			
+			vec3 p0 = position*0.09;//
+			vec3 p1 = p0;
+			vec3 p2 = p0;
+			float r = 20.0-(p0.y*0.5);
+			p2.x = r;
+			p1 = rotateAngleAxis(p0.x*0.2,vec3(0.0,1.0,0.0),p2);
+			p1.y -= (p0.x*0.7)-200.0; 
+			gl_Position = projectionMatrix * modelViewMatrix * vec4(p1,1.0);
+		}
+		*/
+		</script>
+
+
+	</body>
+</html>
+
+

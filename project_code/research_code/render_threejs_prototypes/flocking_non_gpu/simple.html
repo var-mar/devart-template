@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>simple</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #000000;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+
+				background-color: #00FFFF;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+		<div id="info">
+			Pause<input type="checkbox" name="pause" onChange="javascript:changePauseRotation();"><br>
+			<span id="positionMouseScreen"></span><br>
+		</div>
+
+		<script src="js/jquery-1.11.0.min.js" type="text/javascript"></script>
+		<script src="js/three.min.js" type="text/javascript"></script>
+		<script src="js/stats.min.js" type="text/javascript"></script>
+		<script src="js/Butterfly.js" type="text/javascript"></script>
+		<script src="js/maths.js" type="text/javascript"></script>
+		<script src="js/utils.js" type="text/javascript"></script>
+		
+		<script type="text/javascript">
+			var SCREEN_WIDTH = window.innerWidth,
+			SCREEN_HEIGHT = window.innerHeight,
+			SCREEN_WIDTH_HALF = SCREEN_WIDTH  / 2,
+			SCREEN_HEIGHT_HALF = SCREEN_HEIGHT / 2;
+
+			var camera, scene, renderer,
+			butterfly;
+
+			var boid, boids;
+			var maximumButterflies = 1;
+			var pauseRotation = false;
+			var stats;
+
+			init();
+			animate();
+
+			function changePauseRotation(){
+				pauseRotation =!pauseRotation;
+			}
+
+			function addButterfly(){
+				var geometry = new ButterflyGeometry();
+				var butterflyTexture = new THREE.ImageUtils.loadTexture( 'imgs/butterfly_wind.png' );
+	
+				var simpleMaterial = new THREE.MeshBasicMaterial( { 
+					map: butterflyTexture, 
+					side: THREE.DoubleSide, 
+					transparent: true,
+					opacity:1,
+					alphaTest:0.05
+				});
+
+				butterfly = new THREE.Mesh( geometry, simpleMaterial );
+				butterflys[ butterflys.length ] = butterfly;
+				butterfly.phase = Math.floor( Math.random() * 62.0 );
+				butterfly.position.x = 0;
+				butterfly.position.y = 0;
+				butterfly.position.z = 0;
+				butterfly.alpha = 0;
+
+				geometry.rotateWings(12);
+
+				var sphereMaterial = new THREE.MeshBasicMaterial( { wireframe: true, color: 'white'});
+				// set up the sphere vars
+				var radius = 15,
+				    segments = 16,
+				    rings = 16;
+
+				// create a new mesh with
+				// sphere geometry - we will cover
+				// the sphereMaterial next!
+				var sphere = new THREE.Mesh(
+
+				  new THREE.SphereGeometry(
+				    radius,
+				    segments,
+				    rings),
+
+				  sphereMaterial);
+				scene.add( sphere );
+				scene.add( butterfly );
+				$("#totalButterflies").html(butterflys.length);
+			}
+
+			function init() {
+
+				// set some camera attributes
+				var VIEW_ANGLE = 45,
+  				ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT,
+  				NEAR = 0.1,
+  				FAR = 10000;
+
+				camera = new THREE.PerspectiveCamera(
+				    VIEW_ANGLE,
+				    ASPECT,
+				    NEAR,
+				    FAR);
+				camera.position.z = 100;
+				scene = new THREE.Scene();
+				butterflys = [];
+				boids = [];
+
+				addButterfly();
+
+				//renderer = new THREE.CanvasRenderer();
+				renderer = new THREE.WebGLRenderer({ alpha: true });
+				renderer.sortObjects = true;
+				//renderer.setClearColor( 0x00, 0 );
+				// renderer.autoClear = false;
+				renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				renderer.domElement.id = "threejs";
+				document.body.appendChild( renderer.domElement );
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.left = '0px';
+				stats.domElement.style.top = '0px';
+				document.getElementById( 'container' ).appendChild(stats.domElement);
+				//window.addEventListener( 'resize', onWindowResize, false );
+			}
+
+			function onDocumentMouseMove( event ) {
+    			event.preventDefault();
+				var pos3D = screenToThreejs(event.clientX,event.clientY);
+				document.getElementById("positionMouseScreen").innerHTML = "x:"+pos3D.x+"y:"+pos3D.y+"z:"+pos3D.z;
+				butterfly.position.x = pos3D.x;
+				butterfly.position.y = pos3D.y;
+				butterfly.position.z = pos3D.z;
+				butterfly.rotation.y = 0.6*-(pos3D.x/70.0)
+				butterfly.verticesNeedUpdate = true;
+				//pos3D
+			}
+			
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+				stats.update();
+			}
+
+			function render() {
+				var goUpWings = 10.0;
+				var modeEnergy = 1;
+				var modeFlighType = 4;
+				butterfly = butterflys[ 0 ];
+
+				//butterfly.rotation.y += 0.1;
+
+				if(pauseRotation==false){ 
+					//butterfly.rotation.y +=0.01;
+				}
+				
+				// COMPROBAR pujada i baixada - negatiu:puja - positiu:baixar
+				//butterfly.rotation.x = -0.5;
+
+				// (1) Energetic -> more tired (2,3,4,5)
+				if(modeEnergy==1){
+					butterfly.phase = ( butterfly.phase + 0.1  ) ;//+ butterfly.rotation.z*0.5)
+				}
+				
+				if(modeEnergy==2){
+					butterfly.phase = ( butterfly.phase + 0.01  ) ;//+(butterfly.rotation.z*0.5)
+				}
+				butterfly.alpha += 0.1;
+				// modes fly
+
+				if(modeFlighType==1){
+					var maxPhase = Math.radians(60);
+					butterfly.phase = maxPhase*Math.sin(butterfly.alpha)-Math.radians(15);
+				}
+				if(modeFlighType==2){
+					var maxPhase = Math.radians(30);
+
+					butterfly.phase = maxPhase*Math.sin(butterfly.alpha);
+				}
+				if(modeFlighType==3){
+					var maxPhase = Math.radians(60);
+					butterfly.phase = Math.radians(15)+maxPhase*Math.sin(butterfly.alpha);
+				}
+
+				if(modeFlighType==4){
+					var maxPhase = Math.radians(60);
+					butterfly.phase = Math.radians(65)+maxPhase*Math.sin(butterfly.alpha);
+				}
+
+				butterfly.geometry.rotateWings(10.0, butterfly.phase);
+
+				// update geometry
+				butterfly.geometry.verticesNeedUpdate = true;
+				renderer.render( scene, camera );
+			}
+
+			var gif = new GIF({
+  				workers: 2,
+  				quality: 10
+			});
+/*
+	// or copy the pixels from a canvas context
+	gif.addFrame(ctx, {copy: true});
+
+	gif.on('finished', function(blob) {
+  		window.open(URL.createObjectURL(blob));
+	});
+
+	gif.render();
+*/
+		</script>
+	</body>
+</html>

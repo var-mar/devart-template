@@ -1,0 +1,44 @@
+<html>
+<body>
+fps-in:<span id="counterReceive"></span>
+<script>
+  var socket = new WebSocket("ws://192.168.0.5:8083");
+  socket.binaryType = "arraybuffer";
+  var buffer = new Uint8Array(3200);
+  buffer[0] = 250;
+  buffer[1] = 50;
+   
+  var countReceive = 0;
+  socket.onmessage = function(event) {
+    var view = new Uint8Array(event.data);
+    /*
+    if(view[0] == 250 && view[1] == 50){
+      console.log("values ok");
+    }else{
+      console.log("not match values");
+    }
+    */
+    console.log("CLIENT: event.data.byteLength = " + event.data.byteLength + ", view.length = " + view.length);
+    console.log("CLIENT: Sending message. buffer.length = " + buffer.length);
+    
+    countReceive += 1;
+  }
+  function countMessages(){
+  	document.getElementById("counterReceive").innerHTML = countReceive;
+	countReceive = 0;
+  }
+
+  setInterval(function(){countMessages();},1000);
+
+  function sendMessages(){
+  	try {
+    	socket.send(buffer.buffer);
+	}catch (e) {
+    	// handle error
+	}
+  	
+  }
+  setInterval(function(){sendMessages();},20);
+</script>
+</body>
+</html>

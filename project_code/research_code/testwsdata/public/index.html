@@ -1,0 +1,36 @@
+<html>
+<head>
+<title>screen1</title>
+<script type="text/javascript" src="/js/libs/socket.io.js"></script>
+<script type="text/javascript">
+  var ar = new Uint8Array(1600);
+  var counterfps = 0;
+
+  // Setup websocket
+  var socket = io.connect('http://192.168.0.5:3002');
+  socket.on('no', function (data) {
+  	//console.log("receive no");
+  	counterfps +=1;
+  });
+
+  // count fps
+  function countFPS(){
+  	document.getElementById("fps").innerHTML = counterfps;
+	counterfps =0;
+  }
+  setInterval(function(){countFPS();},1000);
+
+  // send messages
+  function send(){
+  	//console.log("send");
+  	var object ={d:JSON.stringify(ar)}
+  	socket.emit('share', object);
+  }
+  setInterval(function(){send();},5);
+
+</script>
+</head>
+<body>
+	fps:<span id="fps"></span>
+</body>
+</html>

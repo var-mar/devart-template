@@ -1,0 +1,29 @@
+body {
+	background-color: #000000;
+	/*ffffff 000 FAA321*/
+	margin: 0px;
+	overflow: hidden;
+	font-family:Monospace;
+	font-size:13px;
+	text-align:center;
+	text-align:center;
+	cursor: pointer;
+}
+
+a {
+	color:#0078ff;
+}
+
+#info {
+	color: #000;
+	position: absolute;
+	top: 10px;
+	width: 100%;
+}
+
+#generalStats{
+	position: absolute;
+	top: 90px;
+	left:0px;
+	color:#ffffff;
+}

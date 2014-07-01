@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "send Manager udp",
+  "description": "Test send array",
+  "version": "2",
+  "minimum_chrome_version": "23",
+  "app": {
+    "background": {
+      "scripts": ["main.js"]
+    }
+  },
+  "permissions": [
+    
+    {"socket": [
+      "udp-send-to",
+      "udp-bind",
+      "udp-multicast-membership"
+    ]}
+  ]
+}

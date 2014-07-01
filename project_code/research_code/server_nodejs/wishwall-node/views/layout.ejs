@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>wishwall</title>
+		<link rel='stylesheet' href='/stylesheets/style.css'  type="text/css">
+		<script type="text/javascript" src="/js/jquery-1.8.3.min.js"></script>
+		<script type="text/javascript" src="/js/datetimeUtils.js"></script>
+
+		<link rel="stylesheet" href="/bootstrap/bootstrap.min.css"> <!-- load bootstrap css -->
+		<link rel="stylesheet" href="/bootstrap/font-awesome.min.css"> <!-- load fontawesome -->
+	
+	</head>
+	<body>
+		<% if (!user) { %>
+		<!--No register users --->
+			<p>
+			<a href="/">Home</a> | 
+			<a href="/login">Log In</a>
+			</p>
+		<% } if (user && role=='admin' ) { %>
+		<!--Register admin users --->
+
+			<p>
+			<a href="/">Home</a> | 
+			<a href="/account">Account</a> | 
+			<a href="/wish/send">Test send wish</a> | 
+			<a href="/wish/list/nonban">Active wish list</a> | 
+			<a href="/wish/list/ban">Ban wish list</a> | 
+			<a href="/users/admin">Admin Users roles</a> |  
+			<a href="/wish/stats">Stats</a> | 
+			<a href="/logout">Log Out</a>
+			</p>
+		<% } if (user && role!='admin' ) { %>
+		<!--Register users but not admin --->
+			<p>
+			<a href="/">Home</a> | 
+			<a href="/account">Account</a> | 
+			<a href="/wish/send">Test send wish</a> | 
+			<a href="/logout">Log Out</a>
+			</p>
+		<% } %>
+		<%- body %>
+
+	</body>
+</html>

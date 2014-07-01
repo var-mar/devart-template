@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+		<title>Wishing wall</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" type="text/css" href="styles.css"/>
+	</head>
+	<body>
+	
+		<div id="info">
+			
+			<a href="javascript:NewButterFly();">New butterfly</a>
+		</div>
+
+		<!-- pass through shaders  https://github.com/codecruzer/webgl-shader-loader-js -->
+		<script id="vertexShader" type="x-shader/x-vertex">
+			void main()	{
+				gl_Position = vec4( position, 1.0 );
+			}
+		</script>
+
+		<script id="fragmentShader" type="x-shader/x-fragment">
+			uniform vec2 resolution;
+			uniform sampler2D texture;
+			void main()	{
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+				vec4 color = texture2D( texture, uv );
+				gl_FragColor = color;
+			}
+		</script>
+
+		<script id="vertexFloatTo4ByteShader" type="x-shader/x-vertex">
+			void main()	{
+				gl_Position = vec4(position.xyz, 1.0 );
+			}
+		</script>
+		
+		<!-- end pass through shaders -->
+		<script id="fragmentGetAllFloatTo4ByteShader" type="x-shader/x-fragment">
+			uniform vec2 resolution;
+			uniform sampler2D texture;
+			
+        	float shift_right(float v, float amt) {
+          		v = floor(v) + 0.5;
+          		return floor(v / exp2(amt));
+        	}
+        	float shift_left(float v, float amt) {
+          		return floor(v * exp2(amt) + 0.5);
+        	}
+        	float mask_last(float v, float bits) {
+          		return mod(v, shift_left(1.0, bits));
+        	}
+        	float extract_bits(float num, float from, float to) {
+          		from = floor(from + 0.5);
+          		to = floor(to + 0.5);
+          		return mask_last(shift_right(num, from), to - from);
+        	}
+        	vec4 encode_float(float val) {
+          		if (val == 0.0){
+            		return vec4(0, 0, 0, 0);
+            	}
+          		float sign = val > 0.0 ? 0.0 : 1.0;
+          		val = abs(val);
+          		float exponent = floor(log2(val));
+          		float biased_exponent = exponent + 127.0;
+          		float fraction = ((val / exp2(exponent)) - 1.0) * 8388608.0;
+          		float t = biased_exponent / 2.0;
+          		float last_bit_of_biased_exponent = fract(t) * 2.0;
+          		float remaining_bits_of_biased_exponent = floor(t);
+          		float byte4 = extract_bits(fraction, 0.0, 8.0) / 255.0;
+          		float byte3 = extract_bits(fraction, 8.0, 16.0) / 255.0;
+          		float byte2 = (last_bit_of_biased_exponent * 128.0 + extract_bits(fraction, 16.0, 23.0)) / 255.0;
+          		float byte1 = (sign * 128.0 + remaining_bits_of_biased_exponent) / 255.0;
+          		return vec4(byte4, byte3, byte2, byte1);
+        	}
+
+        	void main() {
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+				vec4 color = texture2D( texture, uv);
+				vec4 floatCompresed = vec4(0.0,0.0,0.0,0.0);
+				float c = ((uv.x/4.0)/0.0078125);
+				float index = (c-floor(c));
+				if( (0.125-index)<0.1 ){
+					floatCompresed = encode_float(color.r);	
+				}
+				if( (0.375-index)<0.1 ){
+					floatCompresed = encode_float(color.g);	
+				}
+				if( (0.625-index)<0.1 ){
+					floatCompresed = encode_float(color.b);	
+				}
+				if( (0.875-index)<0.1 ){
+					floatCompresed = encode_float(color.a);	
+				}
+				gl_FragColor = floatCompresed;
+        	}
+      	</script>
+
+		<!-- shader for butterfly position -->
+		<script id="fragmentShaderPosition" type="x-shader/x-fragment">
+			uniform vec2 resolution;
+			uniform float time;
+			uniform float delta;
+			uniform sampler2D textureVelocity;
+			uniform sampler2D texturePosition;
+			void main()	{
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+				vec4 tmpPos = texture2D( texturePosition, uv );
+				vec3 position = tmpPos.xyz;
+				vec3 velocity = texture2D( textureVelocity, uv ).xyz;
+				float phase = tmpPos.w;
+				phase = mod( (phase + 0.02 +
+					length(velocity.xz) * 0.05 +
+					max(velocity.y, 0.0) * 0.18), 162.0 );//62.83
+				gl_FragColor = vec4(position + velocity * delta * 15. , phase);
+
+			}
+		</script>
+
+		<script id="fragmentShaderVelocity" type="x-shader/x-fragment">
+			uniform vec2 resolution;
+			uniform float time;
+			uniform float testing;
+			uniform float delta; // about 0.016
+			uniform float seperationDistance; // 20
+			uniform float alignmentDistance; // 40
+			uniform float cohesionDistance; // 
+			uniform float freedomFactor;
+			uniform vec3 predator;
+			
+			uniform float widthCurrent;
+			uniform float heightCurrent;
+
+			uniform sampler2D textureVelocity;
+			uniform sampler2D texturePosition;
+			
+			const float width = WIDTH;
+			const float height = WIDTH;
+
+			float zoneRadius = 40.0;
+			float zoneRadiusSquared = zoneRadius * zoneRadius;
+
+			float separationThresh = 0.45;
+			float alignmentThresh = 0.65;
+
+			const float PI = 3.141592653589793;
+			const float PI_2 = 3.141592653589793 * 2.0;
+			const float VISION = PI * 0.55;
+			const float UPPER_BOUNDS = 300.0;
+			const float LOWER_BOUNDS = -UPPER_BOUNDS;
+			const float SPEED_LIMIT = 5.0;
+
+			float rand(vec2 co){
+			    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+			}
+
+			void main()	{
+				vec2 uv = gl_FragCoord.xy / resolution.xy;
+				vec3 selfVelocity = texture2D( textureVelocity, uv ).xyz;
+				float statusBoid = texture2D( textureVelocity, uv ).w;
+				vec4 colorOut = vec4(0.0,0.0,0.0,statusBoid);
+
+				if( (statusBoid-1.0)<0.1 ){
+					vec3 butterflyPosition, butterflyVelocity;
+					vec3 selfPosition = texture2D( texturePosition, uv ).xyz;
+					zoneRadius = seperationDistance + alignmentDistance + cohesionDistance;
+					separationThresh = seperationDistance / zoneRadius;
+					alignmentThresh = (seperationDistance + alignmentDistance) / zoneRadius;
+					zoneRadiusSquared = zoneRadius * zoneRadius;
+	
+					float dist;
+					vec3 dir; // direction
+					float distSquared;
+	
+					float seperationSquared = seperationDistance * seperationDistance;
+					float cohesionSquared = cohesionDistance * cohesionDistance;
+	
+					float f;
+					float percent;
+	
+					vec3 velocity = selfVelocity;
+	
+					float limit = SPEED_LIMIT;
+	
+					dir = UPPER_BOUNDS - selfPosition;
+					dir.z = 0.;
+					dist = length(dir);
+					distSquared = dist * dist;
+	
+					float preyRadius = 150.0;
+					float preyRadiusSq = preyRadius * preyRadius;
+	
+					// move boid away from predator
+					if (dist < preyRadius) {
+	
+						f = (distSquared / preyRadiusSq - 1.0) * delta * 100.;
+						velocity += normalize(dir) * f;
+						limit += 5.0;
+					}
+	
+					// Attract flocks to the center
+					vec3 central = vec3(0., 0., 0.);
+					dir = selfPosition - central;
+					dist = length(dir);
+					dir.y *= 2.5;
+					velocity -= normalize(dir) * delta * 5.;
+					
+					for (float y=0.0;y<height;y++) {
+						if(y<heightCurrent){
+							for (float x=0.0;x<width;x++) {
+								if(x<widthCurrent){
+									if (
+										x == gl_FragCoord.x && y == gl_FragCoord.y) continue;
+	
+									butterflyPosition = texture2D( texturePosition,
+										vec2(x/resolution.x, y/resolution.y) ).xyz;
+	
+									dir = butterflyPosition - selfPosition;
+									dist = length(dir);
+									distSquared = dist * dist;
+	
+									if (dist > 0.0 && distSquared < zoneRadiusSquared) {
+	
+										percent = distSquared / zoneRadiusSquared;
+	
+										if (percent < separationThresh) { // low
+	
+											// Separation - Move apart for comfort
+											f = (separationThresh / percent - 1.0) * delta;
+											velocity -= normalize(dir) * f;
+ 	
+										} else if (percent < alignmentThresh) { // high
+	
+											// Alignment - fly the same direction
+											float threshDelta = alignmentThresh - separationThresh;
+											float adjustedPercent = ( percent - separationThresh ) / threshDelta;
+	
+											butterflyVelocity = texture2D( textureVelocity, vec2(x/resolution.x, y/resolution.y) ).xyz;
+											
+											f = ( 0.5 - cos( adjustedPercent * PI_2 ) * 0.5 + 0.5 ) * delta;
+											velocity += normalize(butterflyVelocity) * f;
+										} else {
+	
+											// Attraction / Cohesion - move closer
+											float threshDelta = 1.0 - alignmentThresh;
+											float adjustedPercent = ( percent - alignmentThresh ) / threshDelta;
+	
+											 f = ( 0.5 - ( cos( adjustedPercent * PI_2 ) * -0.5 + 0.5 ) ) * delta;
+	
+											 velocity += normalize(dir) * f;
+										}
+									}
+								}
+							}
+						}
+						// this make tends to fly around than down or up
+						// if (velocity.y > 0.) velocity.y *= (1. - 0.2 * delta);
+						// Speed Limits
+						if (length(velocity) > limit) {
+							velocity = normalize(velocity) * limit;
+						}
+					}
+					colorOut = vec4(velocity, statusBoid);
+				}else{
+					colorOut = vec4(selfVelocity, statusBoid);
+				}
+				gl_FragColor = colorOut; 
+			}
+		</script>
+		<!-- Last pass render butterfly -->
+		<script id="butterflyVS" type="x-shader/x-vertex" >
+			attribute vec2 reference;
+			attribute float butterflyVertex;
+
+			uniform sampler2D texturePosition;
+			uniform sampler2D textureVelocity;
+			uniform float widthCurrent;
+			uniform float heightCurrent;
+
+			varying vec3 vNormal;
+			varying vec2 vUv;
+			varying float z;
+
+			uniform float time;
+
+			void main() {
+				vUv = uv;
+				vNormal = normal;
+
+				vec4 tmpPos = texture2D( texturePosition, reference );
+				vec3 pos = tmpPos.xyz;
+				vec3 velocity = normalize(texture2D( textureVelocity, reference ).xyz);
+				float statusBoid = texture2D( textureVelocity, reference ).w;
+				vec3 newPosition = position;
+	
+				if ( butterflyVertex == 1.0 || butterflyVertex == 3.0 || butterflyVertex == 4.0 || butterflyVertex == 7.0 || butterflyVertex == 9.0 || butterflyVertex == 10.0 ) {
+					// flap wings
+					newPosition.y = sin(tmpPos.w) * 37. ;
+					//newPosition.x += cos(tmpPos.w) * 20. * 0.7;
+					// time * 0.03
+				}
+				
+				newPosition = mat3(modelMatrix) * newPosition;
+	
+				velocity.z *= -1.;
+				float xz = length(velocity.xz);
+				float xyz = 1.;
+				float x = sqrt(1. - velocity.y * velocity.y);
+				
+				float cosry = velocity.x / xz;
+				float sinry = velocity.z / xz;
+	
+				float cosrz = (x / xyz);
+				float sinrz = (velocity.y / xyz);
+	
+				mat3 maty =  mat3(
+					cosry, 0, -sinry,
+					0    , 1, 0     ,
+					sinry, 0, cosry
+	
+				);
+	
+				mat3 matz =  mat3(
+					cosrz , sinrz, 0,
+					-sinrz, cosrz, 0,
+					0     , 0    , 1
+				);
+	
+				newPosition =  maty * matz * newPosition;
+				newPosition =  maty * newPosition;
+				newPosition =  newPosition;
+				newPosition += pos;
+				
+				gl_Position = projectionMatrix *  viewMatrix  * vec4( newPosition, 1.0 );
+				z = 0.0;
+				// make visible active messages
+				if( (statusBoid-1.0)<0.1 || (statusBoid-2.0)<0.1){
+					z = 1.0;
+				}
+			}
+		</script>
+
+		<script id="butterflyFS" type="x-shader/x-fragment">
+			uniform sampler2D texture1;
+			varying vec3 vNormal;
+			varying vec2 vUv;
+			varying float z;
+			uniform vec3 color;
+
+			void main() {
+				
+				vec4 tcolor = texture2D(texture1, vUv);
+				//tcolor.a = texture2D(textureMask, vUv).r;
+				if (tcolor == vec4(0.0,0.0,0.0,0.0))
+      				discard;
+
+				if(z>0.1){
+					gl_FragColor = tcolor;
+				}else{
+					gl_FragColor = vec4(0.,0.,0.,0.);
+				}
+				
+				//vec3 light = vec3( 0.0, 1.0, 1.0 );
+				//light = normalize( light );
+				//float dProd = dot( vNormal, light ) ; //* 0.5 + 0.5;
+				// vec4 tcolor = vColor;
+				// vec4 gray = vec4( vec3( tcolor.r * 0.3 + tcolor.g * 0.59 + tcolor.b * 0.11 ), 1.0 );
+
+				//gl_FragColor =  tcolor * dProd;
+				// gl_FragColor =  vec4( dProd  * tcolor );
+			}
+		</script>
+
+		<!-- 
+		loader shaders
+		<script data-src="shaders/name/vertex.js" data-name="myShader" type="x-shader/x-vertex"></script>
+		<script data-src="shaders/name/fragment.js" data-name="myShader" type="x-shader/x-fragment"></script>
+		<script type="text/javascript" src="js/ShaderLoader.min.js"></script>
+		 -->
+		<!-- three.js -->
+		<script type="text/javascript" src="js/three.min.js"></script>
+		<script type="text/javascript" src="js/threex.rendererstats.js"></script>
+		<script type="text/javascript" src="js/Detector.js"></script>
+		<script type="text/javascript" src="js/stats.min.js"></script>
+		<script type="text/javascript" src="js/dat.gui.min.js"></script>
+		<script type="text/javascript" src="js/ShaderGodRays.js"></script>
+		<script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
+		<script type="text/javascript" src="js/socket.io.js"></script>
+		<!-- butterflies rendering -->
+		<script type="text/javascript" src="butterflyManager.js"></script>
+		<script type="text/javascript" src="pathButterfly.js"></script>
+		<script type="text/javascript" src="pathCenterFlocking.js"></script>
+		<script type="text/javascript" src="simulatorRenderer.js"></script>
+		<script type="text/javascript" src="customMesh.js"></script>
+		<script type="text/javascript" src="textureMethods.js"></script>
+		<script type="text/javascript" src="postprocessing.js"></script>
+		<script type="text/javascript" src="sockets.js"></script>
+		<script type="text/javascript" src="main.js"></script>
+
+	</body>
+</html>
