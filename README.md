@@ -21,4 +21,5 @@ https://devart.withgoogle.com/#/project/16494767
 
 ## Acknowledgements
 Thanks to all Google Creative Lab team and Barbican for all help and support to realize this project.
+
 Thanks Saif Mohammad(http://saifmohammad.com/), a researcher at the National Research Council Canada (NRC), that created the Word-Emotion Lexicon that we use to determine the colour of the butterflies after a text analysis of the wish.
